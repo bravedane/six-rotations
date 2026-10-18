@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import RosterTable, { RosterRow } from "./RosterTable";
 
-export const dynamic = "force-dynamic";
-
 const SEASON = process.env.NEXT_PUBLIC_SEASON || "2026-27";
 const CHECKPOINT_ORDER = ["preseason", "december", "postseason"];
 

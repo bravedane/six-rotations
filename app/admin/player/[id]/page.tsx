@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
-
 const CHECKPOINT_LABEL: Record<string, string> = {
   preseason: "Preseason — Six Rotations",
   december: "December — Weather Report",
