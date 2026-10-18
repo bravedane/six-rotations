@@ -151,7 +151,7 @@ export default function PastePage() {
           onChange={(e) => setCheckpoint(e.target.value)}
           style={{ padding: 8, borderRadius: 8, border: "1px solid #d5dde8" }}
         >
-          <option value="preseason">Preseason — Six Rotations</option>
+          <option value="preseason">Campaign Pre-Launch Check-In</option>
           <option value="december">December — Midseason Check-In</option>
           <option value="postseason">Post-season — Season in Review</option>
         </select>

@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
 const CHECKPOINT_LABEL: Record<string, string> = {
-  preseason: "Preseason — Six Rotations",
+  preseason: "Campaign Pre-Launch Check-In",
   december: "December — Midseason Check-In",
   postseason: "Post-season — Season in Review",
 };
