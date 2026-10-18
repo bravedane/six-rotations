@@ -107,8 +107,8 @@ const AG="Agency",CO="Competence",BE="Belonging";
 const DRIFT=["Late nights","My phone","Skipping recovery","Habits slip when life gets busy","Pulling away from people","Losing my why","Going through the motions in practice"];
 const STORMS=["Playing time not going as hoped","Injury","Hard classes","Money","Family expectations","Life far from home","Relationships","None right now"];
 const STEPS=[
- {title:"Who you are",lede:"About 7 minutes. Tap what fits. There are no right answers, only honest ones.",qs:[
-  {id:"privacy",type:"note",label:"Who sees this",paras:["Your answers come to me, Dana, not to Kniff or the staff. They're saved so we can both see how you grow over your time here. I won't pass your survey along. I'll use it for our one-on-one conversations.","I do talk with Kniff and the staff about how to help each of you grow. If something here seems worth sharing, I'll talk with you first, and we'll decide together whether or not it gets shared, and how.","One exception: if I'm ever worried about your safety, I'll make sure you get help."]},
+ {title:"Campaign Pre-Launch Check-In",lede:"6 quick rotations. About 7 minutes. Just between you and Dana.",qs:[
+  {id:"privacy",type:"note",label:"Who sees this",paras:["Only Dana. Not Kniff, not the staff."]},
   {id:"name",type:"text",required:true,label:"Your name",ph:"First and last"},
   {id:"email",type:"email",required:true,label:"Your UCI email",ph:"you@uci.edu"},
   {id:"position",type:"pick",max:2,label:"Position",opts:["Outside","Opposite","Middle","Setter","Libero"]},
