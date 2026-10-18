@@ -120,14 +120,14 @@ const STEPS=[
  ]},
  {title:"Why you play",lede:"Everybody plays for a mix of reasons. Be honest about yours. Every answer here is a fair one.",qs:[
   {id:"why",type:"pick",max:3,label:"What gets you to practice on a hard day?",hint:"Pick up to 3",opts:["I love the game","Getting better feels good","My teammates","Earning playing time","Proving people wrong","My scholarship","Making my family proud","Being seen as one of the best","Who I'm becoming","Not wanting to let anyone down","Coaches noticing me","Habit. It's just what I do"]},
-  {id:"sdt",type:"scale",legend:["Not true","Very true"],label:"How true is this right now?",items:[
+  {id:"sdt",type:"scale",required:true,legend:["Not true","Very true"],label:"How true is this right now?",items:[
    ["agency","I choose how I spend my day","Not just what the schedule tells me"],
    ["competence","I can see myself getting better","Week to week, not just season to season"],
    ["belonging","I matter to this team","Whether or not I'm on the court"]]},
   {id:"goodday",type:"pick",max:3,label:"On a match day when you don't see the court, what would make it a win for you?",hint:"Pick up to 3",opts:["I got better at one thing this week","I made a teammate better in practice","I prepared like I was starting","My energy lifted the bench","I learned something by watching","I kept a promise to myself","Honestly, it's hard to see a win there"]}
  ]},
  {title:"Where you're at",lede:"Rate each one for the last 30 days. 1 means it's hurting you. 5 means it's a strength.",qs:[
-  {id:"scores",type:"scale",legend:["Hurting","Strength"],items:[
+  {id:"scores",type:"scale",required:true,legend:["Hurting","Strength"],items:[
    ["sleep","Sleep","Hours and quality"],["fuel","Fuel","What and when you eat"],["water","Hydration","Water through the day"],
    ["strength","Strength and power","Weight room, explosiveness"],["recovery","Recovery and mobility","Body feels ready"],
    ["focus","Focus","Phone and screens in their place"],["composure","Composure","Bouncing back after an error"],
@@ -153,7 +153,7 @@ const STEPS=[
   {id:"load",type:"pick",max:1,label:"How much can you take on right now?",opts:["One small habit","Two habits","Push me. I'm ready for more"]},
   {id:"when",type:"pick",max:1,label:"When would a new habit stick best?",opts:["First thing in the morning","Before practice","Right after practice","Before bed"]},
   {id:"push",type:"pick",max:1,label:"How do you like to be pushed?",opts:["Straight and direct","Encouragement first","Show me the data","Just check in and let me lead"]},
-  {id:"self",type:"scale",legend:["Not true","Very true"],label:"Last two. Be honest with yourself.",items:[
+  {id:"self",type:"scale",required:true,legend:["Not true","Very true"],label:"Last two. Be honest with yourself.",items:[
    ["team","The team is better because I'm on it",""],
    ["future","I'm doing today what my future self will thank me for",""]]}
  ]}
@@ -266,6 +266,18 @@ function payload(){
   return {schema_version:1,checkpoint:"preseason",season:CONFIG.season,submitted_at:new Date().toISOString(),
     player:{name:(state.name||"").trim(),email:AUTH_EMAIL},answers:state};
 }
+function missingRequired(){
+  // Returns the first unanswered required scale question on the CURRENT step, or null.
+  const s=STEPS[step];
+  for(const q of s.qs){
+    if(q.type==="scale"&&q.required){
+      const answers=state[q.id]||{};
+      const unanswered=q.items.filter(([id])=>typeof answers[id]!=="number");
+      if(unanswered.length)return {q,unanswered};
+    }
+  }
+  return null;
+}
 $("#next").onclick=async()=>{
   if(step>=STEPS.length){
     if(submitted())return;
@@ -281,6 +293,10 @@ $("#next").onclick=async()=>{
     if(!(state.name||"").trim()){e.textContent="Add your name so Dana knows whose answers these are.";e.hidden=false;$("#f-name").focus();return}
     const emailOk=/^[^@\s]+@uci\.edu$/i.test(AUTH_EMAIL)||AUTH_EMAIL===ADMIN_EMAIL;
     if(!emailOk){e.textContent="Your signed-in email isn't a UCI address. Sign in again with your @uci.edu email.";e.hidden=false;return}}
+  const miss=missingRequired();
+  if(miss){const e=$("#err");const[,firstLabel]=miss.unanswered[0];
+    e.textContent="Rate every one before moving on — you missed \u201c"+firstLabel+"\u201d.";e.hidden=false;
+    e.scrollIntoView({block:"center",behavior:"smooth"});return}
   step++;render();
 };
 $("#back").onclick=()=>{if(step>0){step--;render()}};
