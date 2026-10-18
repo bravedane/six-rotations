@@ -18,6 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <a href="/admin/roster" style={navStyle}>Roster</a>
             <a href="/admin/talk-to-first" style={navStyle}>Talk to first</a>
             <a href="/admin/paste" style={navStyle}>Paste a texted answer</a>
+            <a href="/checkin" style={{ ...navStyle, color: "#9a5f00" }}>Preview player check-in →</a>
           </nav>
         </div>
         {children}
