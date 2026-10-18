@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import NotesSection from "./NotesSection";
 
 const CHECKPOINT_LABEL: Record<string, string> = {
   preseason: "Campaign Pre-Launch Check-In",
@@ -44,7 +45,8 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
     .from("coach_notes")
     .select("*")
     .eq("player_id", id)
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false });
 
   const scoreByCheckin = new Map((scores || []).map((s) => [s.checkin_id, s]));
   const picksByCheckin = new Map<string, { kind: string; value: string }[]>();
@@ -193,14 +195,16 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       </section>
 
       <section style={card}>
-        <h2 style={h2}>Dana's notes</h2>
-        {(notes || []).length === 0 && <p style={muted}>No notes yet.</p>}
-        {(notes || []).map((n) => (
-          <div key={n.id} style={{ fontSize: 14, marginBottom: 8, borderBottom: "1px solid #eaf0f7", paddingBottom: 8 }}>
-            <div style={{ color: "#566377", fontSize: 12 }}>{n.date}</div>
-            <div>{n.note}</div>
-          </div>
-        ))}
+        <h2 style={h2}>Notes — Dana &amp; Coach Kniffin</h2>
+        <NotesSection
+          playerId={id}
+          notes={(notes || []).map((n) => ({
+            id: n.id,
+            date: n.date,
+            note: n.note,
+            source: (n.source === "kniff" ? "kniff" : "dana") as "dana" | "kniff",
+          }))}
+        />
       </section>
 
       <section style={card}>
