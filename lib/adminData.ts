@@ -44,25 +44,32 @@ export type PlayerRecord = {
 export async function loadRoster(): Promise<PlayerRecord[]> {
   const supabase = await createClient();
 
-  const { data: players } = await supabase
+  const { data: players, error: playersErr } = await supabase
     .from("players")
     .select("id, name, uci_email")
     .order("name");
+  if (playersErr) {
+    console.error("loadRoster: players query failed", playersErr);
+    throw new Error(`Couldn't load players: ${playersErr.message}`);
+  }
 
-  const { data: rosterSeasons } = await supabase
+  const { data: rosterSeasons, error: rosterErr } = await supabase
     .from("roster_seasons")
     .select("player_id, year_in_school, positions")
     .eq("season", SEASON);
+  if (rosterErr) console.error("loadRoster: roster_seasons query failed", rosterErr);
 
-  const { data: checkins } = await supabase
+  const { data: checkins, error: checkinsErr } = await supabase
     .from("checkins")
     .select("id, player_id, checkpoint, submitted_at, answers")
     .eq("season", SEASON);
+  if (checkinsErr) console.error("loadRoster: checkins query failed", checkinsErr);
 
   const checkinIds = (checkins || []).map((c) => c.id);
-  const { data: scores } = checkinIds.length
+  const { data: scores, error: scoresErr } = checkinIds.length
     ? await supabase.from("core_scores").select("*").in("checkin_id", checkinIds)
-    : { data: [] };
+    : { data: [], error: null };
+  if (scoresErr) console.error("loadRoster: core_scores query failed", scoresErr);
 
   const scoreByCheckin = new Map((scores || []).map((s) => [s.checkin_id, s]));
   const rosterByPlayer = new Map((rosterSeasons || []).map((r) => [r.player_id, r]));
