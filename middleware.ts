@@ -32,7 +32,9 @@ export async function middleware(request: NextRequest) {
     path === "/login" ||
     path.startsWith("/auth") ||
     path.startsWith("/_next") ||
-    path.startsWith("/favicon");
+    path.startsWith("/favicon") ||
+    path.startsWith("/checkin") ||
+    path.startsWith("/api/submit");
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
@@ -44,6 +46,8 @@ export async function middleware(request: NextRequest) {
   if (user && path.startsWith("/admin")) {
     const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "").toLowerCase();
     if ((user.email || "").toLowerCase() !== adminEmail) {
+      // Non-admin signed-in users have no protected view of their own — the
+      // check-in form is public now, so just send them there.
       const url = request.nextUrl.clone();
       url.pathname = "/checkin";
       return NextResponse.redirect(url);
