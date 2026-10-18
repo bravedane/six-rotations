@@ -1,10 +1,8 @@
-// This wraps the ORIGINAL preseason-survey.html content byte-for-byte for design/wording,
-// with exactly three functional changes needed to connect it to the real backend:
-//   1. CONFIG.submitUrl points at our own /api/submit endpoint.
-//   2. The email field is locked to the address the player actually signed in with
-//      (never trust a typed email — per BUILD-BRIEF.md).
-//   3. The email format check also accepts the admin's own address, so Dane can test
-//      the exact player flow as himself before any player sees it.
+// This wraps the ORIGINAL preseason-survey.html content byte-for-byte for design/wording.
+// No sign-in required — the player types his own name and UCI email directly into the
+// form (Rotation 1), and that's what gets saved. Low-friction by design: open the link,
+// fill it out, submit. The email format check also accepts the admin's own address, so
+// Dane can test the exact player flow as himself before any player sees it.
 
 export function getPreseasonHtml(authEmail: string, adminEmail: string): string {
   const html = String.raw`<!doctype html>
@@ -104,7 +102,6 @@ pre.summary{white-space:pre-wrap;word-break:break-word;font-family:var(--body);f
 </div></div>
 
 <script>
-const AUTH_EMAIL=${JSON.stringify(authEmail.toLowerCase())};
 const ADMIN_EMAIL=${JSON.stringify(adminEmail.toLowerCase())};
 const AG="Agency",CO="Competence",BE="Belonging";
 const DRIFT=["Late nights","My phone","Skipping recovery","Habits slip when life gets busy","Pulling away from people","Losing my why","Going through the motions in practice"];
@@ -112,8 +109,8 @@ const STORMS=["Playing time not going as hoped","Injury","Hard classes","Money",
 const STEPS=[
  {title:"Who you are",lede:"About 7 minutes. Tap what fits. There are no right answers, only honest ones.",qs:[
   {id:"privacy",type:"note",label:"Who sees this",paras:["Your answers come to me, Dana, not to Kniff or the staff. They're saved so we can both see how you grow over your time here. I won't pass your survey along. I'll use it for our one-on-one conversations.","I do talk with Kniff and the staff about how to help each of you grow. If something here seems worth sharing, I'll talk with you first, and we'll decide together whether or not it gets shared, and how.","One exception: if I'm ever worried about your safety, I'll make sure you get help."]},
-  {id:"name",type:"text",label:"Your name",ph:"First and last"},
-  {id:"email",type:"email",label:"Your UCI email",ph:"you@uci.edu"},
+  {id:"name",type:"text",required:true,label:"Your name",ph:"First and last"},
+  {id:"email",type:"email",required:true,label:"Your UCI email",ph:"you@uci.edu"},
   {id:"position",type:"pick",max:2,label:"Position",opts:["Outside","Opposite","Middle","Setter","Libero"]},
   {id:"year",type:"pick",max:1,label:"Year",opts:["Freshman","Sophomore","Junior","Senior","Graduate / Fifth year"]},
   {id:"words",type:"pick",max:3,label:"Three words your teammates would use to describe you",hint:"Pick up to 3",opts:["Competitor","Calm","Loud","Funny","Grinder","Quiet","Leader","Intense","Loyal","Creative","Steady","Fiery","Thoughtful","Coachable"]}
@@ -159,9 +156,8 @@ const STEPS=[
  ]}
 ];
 const CONFIG={season:${JSON.stringify(process.env.NEXT_PUBLIC_SEASON || "2026-27")},submitUrl:"/api/submit"};
-const KEY="***"+CONFIG.season+"-preseason-"+AUTH_EMAIL;
+const KEY="***"+CONFIG.season+"-preseason-draft";
 let state={};try{state=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){}
-state.email=AUTH_EMAIL;
 let step=0;try{step=Math.min(+localStorage.getItem(KEY+"-step")||0,STEPS.length)}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state));localStorage.setItem(KEY+"-step",step)}catch(e){}};
 const $=s=>document.querySelector(s);
@@ -212,7 +208,7 @@ function render(){
     if(q.label)card.append(el("h2",{text:q.label}));
     if(q.hint)card.append(el("p",{class:"hint",text:q.hint}));
     if(q.type==="text"){const i=el("input",{type:"text",id:"f-"+q.id,placeholder:q.ph,autocomplete:"name"});i.value=state[q.id]||"";i.oninput=()=>{state[q.id]=i.value;save()};card.append(i)}
-    if(q.type==="email"){const i=el("input",{type:"email",id:"f-"+q.id,placeholder:q.ph,autocomplete:"email",inputmode:"email"});i.value=AUTH_EMAIL;i.readOnly=true;i.style.opacity="0.7";card.append(i);card.append(el("p",{class:"hint",text:"This is the email you signed in with. It's locked so your answers always match your own record."}))}
+    if(q.type==="email"){const i=el("input",{type:"email",id:"f-"+q.id,placeholder:q.ph,autocomplete:"email",inputmode:"email"});i.value=state[q.id]||"";i.oninput=()=>{state[q.id]=i.value;save()};card.append(i)}
     if(q.type==="area"){const t=el("textarea",{id:"f-"+q.id,placeholder:q.ph});t.value=state[q.id]||"";t.oninput=()=>{state[q.id]=t.value;save()};card.append(t)}
     if(q.type==="note"){card.classList.add("trust");q.paras.forEach(t=>card.append(el("p",{text:t})))}
     if(q.type==="pick")card.append(pickQ(q));
@@ -264,7 +260,7 @@ function renderDone(m){
 function submitted(){try{return localStorage.getItem(KEY+"-submitted")==="1"}catch(e){return false}}
 function payload(){
   return {schema_version:1,checkpoint:"preseason",season:CONFIG.season,submitted_at:new Date().toISOString(),
-    player:{name:(state.name||"").trim(),email:AUTH_EMAIL},answers:state};
+    player:{name:(state.name||"").trim(),email:(state.email||"").trim().toLowerCase()},answers:state};
 }
 function missingRequired(){
   // Returns the first unanswered required scale question on the CURRENT step, or null.
@@ -291,8 +287,9 @@ $("#next").onclick=async()=>{
     return}
   if(step===0){const e=$("#err");
     if(!(state.name||"").trim()){e.textContent="Add your name so Dana knows whose answers these are.";e.hidden=false;$("#f-name").focus();return}
-    const emailOk=/^[^@\s]+@uci\.edu$/i.test(AUTH_EMAIL)||AUTH_EMAIL===ADMIN_EMAIL;
-    if(!emailOk){e.textContent="Your signed-in email isn't a UCI address. Sign in again with your @uci.edu email.";e.hidden=false;return}}
+    const typedEmail=(state.email||"").trim().toLowerCase();
+    const emailOk=/^[^@\s]+@uci\.edu$/i.test(typedEmail)||typedEmail===ADMIN_EMAIL;
+    if(!emailOk){e.textContent="Enter your UCI email (it has to end in @uci.edu) so your answers are saved under your own name.";e.hidden=false;$("#f-email").focus();return}}
   const miss=missingRequired();
   if(miss){const e=$("#err");const[,firstLabel]=miss.unanswered[0];
     e.textContent="Rate every one before moving on — you missed \u201c"+firstLabel+"\u201d.";e.hidden=false;
