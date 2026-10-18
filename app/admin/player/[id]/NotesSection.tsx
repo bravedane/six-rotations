@@ -69,7 +69,7 @@ export default function NotesSection({ playerId, notes }: { playerId: string; no
             onClick={() => setSource("kniff")}
             style={sourceToggle(source === "kniff")}
           >
-            From Coach Kniffin
+            Kniff Notes
           </button>
         </div>
         <textarea
