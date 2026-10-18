@@ -7,7 +7,6 @@ import { NextResponse } from "next/server";
 // testing) so a garbage address can't silently create a bad record.
 export async function POST(req: Request) {
   const supabase = await createClient();
-  const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "").toLowerCase();
 
   let body: {
     checkpoint?: string;
@@ -29,7 +28,7 @@ export async function POST(req: Request) {
   if (!checkpoint || !season || !answers) {
     return NextResponse.json({ error: "missing fields" }, { status: 400 });
   }
-  const emailOk = /^[^@\s]+@uci\.edu$/i.test(email) || email === adminEmail;
+  const emailOk = /^[^@\s]+@uci\.edu$/i.test(email);
   if (!emailOk) {
     return NextResponse.json({ error: "email must be a uci.edu address" }, { status: 400 });
   }
