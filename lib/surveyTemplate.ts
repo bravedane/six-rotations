@@ -107,8 +107,7 @@ const AG="Agency",CO="Competence",BE="Belonging";
 const DRIFT=["Late nights","My phone","Skipping recovery","Habits slip when life gets busy","Pulling away from people","Losing my why","Going through the motions in practice"];
 const STORMS=["Playing time not going as hoped","Injury","Hard classes","Money","Family expectations","Life far from home","Relationships","None right now"];
 const STEPS=[
- {title:"Preseason — Six Rotations",lede:"6 quick rotations. About 7 minutes. Just between you and Dana.",qs:[
-  {id:"privacy",type:"note",label:"Who sees this",paras:["Only Dana. Not Kniff, not the staff."]},
+ {title:"PRESEASON CHECK-IN — SIX ROTATIONS",lede:"6 quick sets of questions. It should take less than 9 minutes. Just between you and Dana.",qs:[
   {id:"name",type:"text",required:true,label:"Your name",ph:"First and last"},
   {id:"email",type:"email",required:true,label:"Your UCI email",ph:"you@uci.edu"},
   {id:"position",type:"pick",max:2,label:"Position",opts:["Outside","Opposite","Middle","Setter","Libero"]},
