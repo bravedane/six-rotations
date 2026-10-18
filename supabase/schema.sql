@@ -2,6 +2,8 @@
 -- Run this whole file once in Supabase: Project > SQL Editor > New query > paste > Run.
 -- Safe to re-run (uses IF NOT EXISTS / CREATE OR REPLACE).
 
+create extension if not exists pgcrypto;
+
 -- ========== ADMIN EMAIL ==========
 -- Set the one admin (Dana's) login email here. Everything else keys off this.
 create or replace function is_admin()
