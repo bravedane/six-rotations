@@ -107,7 +107,7 @@ const AG="Agency",CO="Competence",BE="Belonging";
 const DRIFT=["Late nights","My phone","Skipping recovery","Habits slip when life gets busy","Pulling away from people","Losing my why","Going through the motions in practice"];
 const STORMS=["Playing time not going as hoped","Injury","Hard classes","Money","Family expectations","Life far from home","Relationships","None right now"];
 const STEPS=[
- {title:"PRESEASON CHECK-IN — SIX ROTATIONS",lede:"6 quick sets of questions. It should take less than 9 minutes. Just between you and Dana.",qs:[
+ {title:"PRESEASON CHECK\u2011IN\n— SIX ROTATIONS",lede:"6 quick sets of questions. It should take less than 9 minutes. Just between you and Dana.",qs:[
   {id:"name",type:"text",required:true,label:"Your name",ph:"First and last"},
   {id:"email",type:"email",required:true,label:"Your UCI email",ph:"you@uci.edu"},
   {id:"position",type:"pick",max:2,label:"Position",opts:["Outside","Opposite","Middle","Setter","Libero"]},
@@ -200,7 +200,8 @@ function render(){
   if(step>=STEPS.length){$("#eyebrow").textContent="Final whistle";return renderDone(m)}
   const s=STEPS[step];$("#eyebrow").textContent="Rotation "+(step+1)+" of 6";
   const sec=el("section",{class:"step"});sec.style.cssText="display:flex;flex-direction:column;gap:16px";
-  sec.append(el("h1",{text:s.title}),el("p",{class:"lede",text:s.lede}));
+  const h1=el("h1");s.title.split("\n").forEach(line=>h1.append(el("span",{style:"display:block"},[document.createTextNode(line)])));
+  sec.append(h1,el("p",{class:"lede",text:s.lede}));
   if(step===5)sec.append(el("div",{class:"lens"},[el("span",{},[el("b",{text:"Agency "}),document.createTextNode("I choose it")]),el("span",{},[el("b",{text:"Competence "}),document.createTextNode("I'm getting better")]),el("span",{},[el("b",{text:"Belonging "}),document.createTextNode("I matter here")])]));
   s.qs.forEach(q=>{
     const card=el("div",{class:"q"});
