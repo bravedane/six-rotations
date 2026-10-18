@@ -3,8 +3,8 @@ import Link from "next/link";
 import NotesSection from "./NotesSection";
 
 const CHECKPOINT_LABEL: Record<string, string> = {
-  preseason: "Campaign Pre-Launch Check-In",
-  december: "December — Midseason Check-In",
+  preseason: "Preseason — Six Rotations",
+  december: "Campaign Pre-Launch Check-In",
   postseason: "Post-season — Season in Review",
 };
 const CHECKPOINT_ORDER = ["preseason", "december", "postseason"];

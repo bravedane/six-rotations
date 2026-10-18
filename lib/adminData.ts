@@ -3,8 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 const SEASON = process.env.NEXT_PUBLIC_SEASON || "2026-27";
 export const CHECKPOINT_ORDER = ["preseason", "december", "postseason"];
 export const CHECKPOINT_LABEL: Record<string, string> = {
-  preseason: "Campaign Pre-Launch",
-  december: "Midseason",
+  preseason: "Preseason",
+  december: "Campaign Pre-Launch",
   postseason: "Post-season",
 };
 
