@@ -1,73 +1,82 @@
-import { createClient } from "@/lib/supabase/server";
-import RosterTable, { RosterRow } from "./RosterTable";
+import Link from "next/link";
+import { loadRoster, latestCheckin, priorCheckin, CHECKPOINT_LABEL } from "@/lib/adminData";
+import { computeFlags, FLAG_LABEL } from "@/lib/flags";
+import TeamOverview from "./TeamOverview";
 
-const SEASON = process.env.NEXT_PUBLIC_SEASON || "2026-27";
-const CHECKPOINT_ORDER = ["preseason", "december", "postseason"];
+export default async function TeamPage() {
+  const players = await loadRoster();
 
-export default async function AdminRosterPage() {
-  const supabase = await createClient();
-
-  const { data: players } = await supabase
-    .from("players")
-    .select("id, name, uci_email")
-    .order("name");
-
-  const { data: checkins } = await supabase
-    .from("checkins")
-    .select("id, player_id, checkpoint, submitted_at, season")
-    .eq("season", SEASON);
-
-  const checkinIds = (checkins || []).map((c) => c.id);
-  const { data: scores } = checkinIds.length
-    ? await supabase
-        .from("core_scores")
-        .select("checkin_id, self_team, standard_team, gap_team, self_future, standard_future, gap_future")
-        .in("checkin_id", checkinIds)
-    : { data: [] };
-
-  const scoreByCheckin = new Map((scores || []).map((s) => [s.checkin_id, s]));
-
-  const rows: RosterRow[] = (players || []).map((p) => {
-    const playerCheckins = (checkins || [])
-      .filter((c) => c.player_id === p.id)
-      .sort(
-        (a, b) =>
-          CHECKPOINT_ORDER.indexOf(b.checkpoint) - CHECKPOINT_ORDER.indexOf(a.checkpoint)
-      );
-
-    const latest = playerCheckins[0];
-    const latestScore = latest ? scoreByCheckin.get(latest.id) : undefined;
-
-    const gapTeam = latestScore?.gap_team ?? null;
-    const gapFuture = latestScore?.gap_future ?? null;
-    const flagged = Math.abs(gapTeam ?? 0) >= 1.5 || Math.abs(gapFuture ?? 0) >= 1.5;
+  const cards = players.map((p) => {
+    const latest = latestCheckin(p);
+    const prior = priorCheckin(p);
+    const scoreByCheckin = new Map(
+      p.checkins.filter((c) => c.score).map((c) => [c.id, { checkin_id: c.id, ...c.score! }])
+    );
+    const { reasons } = computeFlags(
+      p.checkins.map((c) => ({ id: c.id, season: "", checkpoint: c.checkpoint, submitted_at: c.submitted_at, answers: c.answers })),
+      scoreByCheckin
+    );
 
     return {
-      playerId: p.id,
-      name: p.name || "",
-      email: p.uci_email,
-      checkpointsSubmitted: playerCheckins.map((c) => c.checkpoint),
-      checkpoint: latest?.checkpoint ?? null,
-      submittedAt: latest?.submitted_at ?? null,
-      selfTeam: latestScore?.self_team ?? null,
-      standardTeam: latestScore?.standard_team ?? null,
-      gapTeam,
-      selfFuture: latestScore?.self_future ?? null,
-      standardFuture: latestScore?.standard_future ?? null,
-      gapFuture,
-      flagged,
+      id: p.id,
+      name: p.name,
+      email: p.email,
+      positions: p.positions,
+      year: p.year,
+      checkpointsSubmitted: p.checkins.map((c) => CHECKPOINT_LABEL[c.checkpoint] || c.checkpoint),
+      latestCheckpoint: latest ? CHECKPOINT_LABEL[latest.checkpoint] || latest.checkpoint : null,
+      agency: latest?.score?.agency ?? null,
+      competence: latest?.score?.competence ?? null,
+      belonging: latest?.score?.belonging ?? null,
+      priorAgency: prior?.score?.agency ?? null,
+      priorCompetence: prior?.score?.competence ?? null,
+      priorBelonging: prior?.score?.belonging ?? null,
+      gapTeam: latest?.score?.gap_team ?? null,
+      gapFuture: latest?.score?.gap_future ?? null,
+      flagCount: reasons.length,
+      flagLabels: reasons.map((r) => FLAG_LABEL[r]),
     };
   });
 
+  const allPositions = Array.from(new Set(players.flatMap((p) => p.positions))).sort();
+
+  const teamAvg = (key: "agency" | "competence" | "belonging") => {
+    const vals = cards.map((c) => c[key]).filter((v): v is number => v !== null);
+    if (!vals.length) return null;
+    return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+  };
+
   return (
     <div>
-      <h1 style={{ fontSize: 28, marginBottom: 4 }}>Roster — {SEASON}</h1>
-      <p style={{ color: "#566377", marginTop: 0, marginBottom: 20 }}>
-        Latest check-in per player. Self-grade vs. standard score, and the gap between them. A gap
-        of 1.5 or more in either direction is flagged — a conversation starter, not a verdict. Tap a
-        player for his full record.
-      </p>
-      <RosterTable rows={rows} />
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontSize: 30, marginBottom: 4 }}>Team</h1>
+        <p style={{ color: "#566377", marginTop: 0, maxWidth: 680 }}>
+          Every athlete, one view. Filter by position or flag, scan agency / competence /
+          belonging at a glance, and tap into anyone for his full record.{" "}
+          <Link href="/admin/talk-to-first" style={{ color: "#0064a4", fontWeight: 600 }}>
+            See who to talk to first →
+          </Link>
+        </p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 24, maxWidth: 560 }}>
+        <TeamStat label="Agency" value={teamAvg("agency")} />
+        <TeamStat label="Competence" value={teamAvg("competence")} />
+        <TeamStat label="Belonging" value={teamAvg("belonging")} />
+      </div>
+
+      <TeamOverview cards={cards} positions={allPositions} />
+    </div>
+  );
+}
+
+function TeamStat({ label, value }: { label: string; value: number | null }) {
+  return (
+    <div style={{ background: "#fff", border: "1px solid #d5dde8", borderRadius: 10, padding: "12px 14px" }}>
+      <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.04em", color: "#566377" }}>
+        Team {label}
+      </div>
+      <div style={{ fontSize: 26, fontWeight: 700 }}>{value === null ? "—" : value.toFixed(1)}</div>
     </div>
   );
 }
